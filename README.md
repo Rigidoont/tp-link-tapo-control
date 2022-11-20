@@ -1,3 +1,5 @@
+Command-line application to control some of the Tp-Link Tapo devices.  
+
 This is still work in progress, but the app can be used already.
 
 > Expect a noticeable delay when using device aliases instead of IPs.

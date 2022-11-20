@@ -8,6 +8,7 @@ interface TapoPlugCommandOptions {
   ips?: string[];
   state?: boolean;
   toggle?: boolean;
+  debug?: boolean;
 }
 
 @Command({
@@ -25,8 +26,8 @@ export class TapoPlugCommand extends CommandRunner {
     options?: TapoPlugCommandOptions,
   ): Promise<void> {
 
-    const { email, password, aliases, ips, state, toggle } = options
-    // console.warn(options)
+    const { email, password, aliases, ips, state, toggle, debug } = options
+    if (debug) console.warn(options)
 
     const cloudToken = await cloudLogin(email, password);
     const devicesList = await listDevicesByType(cloudToken, 'SMART.TAPOPLUG');
@@ -35,7 +36,7 @@ export class TapoPlugCommand extends CommandRunner {
       ? devicesList.filter(device => aliases.includes(device.alias))
       : []
 
-    // console.warn(devicesList, devicesListFiltered)
+    if (debug) console.warn({ devicesList, devicesListFiltered })
 
     if (!devicesListFiltered.length && !ips?.length) return
 
@@ -63,7 +64,7 @@ export class TapoPlugCommand extends CommandRunner {
       if (toggle) {
 
         const info = await getDeviceInfo(deviceToken)
-        // console.warn(info)
+        if (debug) console.warn(info)
 
         if (info.device_on) await turnOff(deviceToken)
         else await turnOn(deviceToken)
@@ -123,5 +124,12 @@ export class TapoPlugCommand extends CommandRunner {
     return true
   }
 
+  @Option({
+    flags: '-d, --debug',
+    description: 'Enable debugging'
+  })
+  parseDebug(): boolean {
+    return true
+  }
 
 }
