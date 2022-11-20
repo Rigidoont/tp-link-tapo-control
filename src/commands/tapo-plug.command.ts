@@ -26,7 +26,7 @@ export class TapoPlugCommand extends CommandRunner {
   ): Promise<void> {
 
     const { email, password, aliases, ips, state, toggle } = options
-    console.warn(options)
+    // console.warn(options)
 
     const cloudToken = await cloudLogin(email, password);
     const devicesList = await listDevicesByType(cloudToken, 'SMART.TAPOPLUG');
@@ -112,7 +112,6 @@ export class TapoPlugCommand extends CommandRunner {
     description: 'New state for the plugs (on/off)'
   })
   parseState(val: string): boolean {
-    console.warn(val, !!+val)
     return !!+val
   }
 
