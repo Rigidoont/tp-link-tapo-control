@@ -1,5 +1,7 @@
 import { Command, CommandRunner, Option } from 'nest-commander';
-import { cloudLogin, getDeviceInfo, listDevicesByType, loginDevice, loginDeviceByIp, TapoDevice, TapoDeviceKey, turnOff, turnOn } from "tp-link-tapo-connect";
+import { cloudLogin, getDeviceInfo, listDevicesByType, loginDevice, loginDeviceByIp, TapoDevice, TapoDeviceKey, turnOff, turnOn } from 'tp-link-tapo-connect';
+import { TapoDeviceType } from '../models/tapo-device-type.enum';
+import { TapoControlService } from '../services/tapo-control.service';
 
 interface TapoPlugCommandOptions {
   email: string;
@@ -17,7 +19,7 @@ interface TapoPlugCommandOptions {
 })
 export class TapoPlugCommand extends CommandRunner {
 
-  constructor() {
+  constructor(private readonly service: TapoControlService) {
     super()
   }
 
@@ -29,34 +31,27 @@ export class TapoPlugCommand extends CommandRunner {
     const { email, password, aliases, ips, state, toggle, debug } = options
     if (debug) console.warn(options)
 
-    const cloudToken = await cloudLogin(email, password);
-    const devicesList = await listDevicesByType(cloudToken, 'SMART.TAPOPLUG');
+    let devicesListFiltered: TapoDevice[] = []
 
-    const devicesListFiltered: TapoDevice[] = aliases?.length
-      ? devicesList.filter(device => aliases.includes(device.alias))
-      : []
+    if (aliases?.length) {
+      const cloudToken = await cloudLogin(email, password);
+      const devicesList = await listDevicesByType(
+        cloudToken,
+        TapoDeviceType.SMART_PLUG
+      );
 
-    if (debug) console.warn({ devicesList, devicesListFiltered })
+      devicesListFiltered =
+        devicesList.filter(device => aliases.includes(device.alias))
 
-    if (!devicesListFiltered.length && !ips?.length) return
-
-    let deviceTokenReqs: Promise<any>[] = []
-
-    if (devicesListFiltered.length) {
-      deviceTokenReqs = deviceTokenReqs.concat(
-        devicesListFiltered.map(device => loginDevice(email, password, device))
-      )
+      if (debug) console.warn({ devicesList, devicesListFiltered })
     }
 
-    if (ips?.length) {
-      deviceTokenReqs = deviceTokenReqs.concat(
-        ips.map(ip => loginDeviceByIp(email, password, ip))
-      )
-    }
+    const deviceTokens: TapoDeviceKey[] = await Promise.all([
+      ...devicesListFiltered?.map(device => loginDevice(email, password, device)),
+      ...[].concat(ips?.map(ip => loginDeviceByIp(email, password, ip)))
+    ])
 
-    if (!deviceTokenReqs.length) return
-
-    const deviceTokens: TapoDeviceKey[] = await Promise.all(deviceTokenReqs)
+    if (!deviceTokens.length) return
 
     await Promise.allSettled(deviceTokens.map(async (deviceToken, i) => {
       if (state === true) return turnOn(deviceToken)

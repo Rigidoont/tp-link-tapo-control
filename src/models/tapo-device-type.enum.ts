@@ -1,0 +1,6 @@
+
+export enum TapoDeviceType {
+  SMART_PLUG = 'SMART.TAPOPLUG',
+  SMART_BULB = 'SMART.TAPOBULB',
+  SMART_IPCAMERA = 'SMART.IPCAMERA',
+}
