@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { CachedObject } from '../models/cached-object';
+import { CachedObjectKey } from '../models/cached-object-key.enum';
 import { TapoCredentials } from '../models/tapo-credentials';
 import { TapoDeviceType } from '../models/tapo-device-type.enum';
 import {
@@ -15,9 +15,6 @@ import {
 import { TapoCachingService } from './tapo-caching.service';
 
 
-/**
- * NOT FINISHED, NOT WORKING
- */
 @Injectable()
 export class TapoApiService {
 
@@ -32,14 +29,13 @@ export class TapoApiService {
   async getCloudToken(credentials: TapoCredentials): Promise<string> {
     const { email, password } = credentials
 
-    // todo check for cached token
-    const cachedCloudToken: CachedObject = await Promise.resolve()
-    const cloudToken = cachedCloudToken?.content
-      ?? await cloudLogin(email, password)
+    const cachingKey = `${CachedObjectKey.CLOUD_TOKEN}:${email}` as const
+    const cachedCloudToken = await this.cachingService.getItem<string>(cachingKey)
 
-    if (cachedCloudToken) {
-      new CachedObject(cloudToken, this.cacheTimeout)
-      // todo cache object
+    const cloudToken = cachedCloudToken ?? await cloudLogin(email, password)
+
+    if (!cachedCloudToken) {
+      await this.cache(cachingKey, cloudToken)
     }
 
     return cloudToken
@@ -58,13 +54,16 @@ export class TapoApiService {
   ): Promise<TapoDevice[]> {
     const cloudToken = await this.getCloudToken(credentials)
 
-    const cachedDevices = forceRefresh ? null : new CachedObject(null, 1) // todo
-    const devicesList: TapoDevice[] = cachedDevices?.content
+    const cachingKey = `${CachedObjectKey.DEVICES}:${credentials.email}` as const
+    const cachedDevices = !forceRefresh
+      ? await this.cachingService.getItem<TapoDevice[]>(cachingKey)
+      : null
+
+    const devicesList: TapoDevice[] = cachedDevices
       ?? await listDevicesByType(cloudToken, deviceType)
 
     if (!cachedDevices) {
-      new CachedObject(devicesList, this.cacheTimeout)
-      // todo cache object
+      await this.cache(cachingKey, devicesList)
     }
 
     return devicesList
@@ -81,14 +80,35 @@ export class TapoApiService {
   ): Promise<TapoDeviceKey> {
     const { email, password } = credentials
 
-    const ip = typeof deviceOrIp === 'string' ? deviceOrIp : deviceOrIp.ip
+    const ip = typeof deviceOrIp === 'string' ? deviceOrIp : deviceOrIp?.ip
     const device = typeof deviceOrIp === 'string' ? undefined : deviceOrIp
+    console.warn(deviceOrIp, device)
 
-    const cachedDeviceKey = new CachedObject<TapoDeviceKey>(null, 1) // todo
-    const deviceKey: TapoDeviceKey = cachedDeviceKey?.content
-      ?? ip
-        ? await loginDeviceByIp(email, password, ip)
-        : await loginDevice(email, password, device)
+
+    const cachingKey = `${CachedObjectKey.DEVICE_KEY}:${ip || device.deviceId}` as const
+    const cachedDeviceKey = await this.cachingService.getItem<TapoDeviceKey>(cachingKey)
+    if (cachedDeviceKey) {
+      cachedDeviceKey.key = Buffer.from(cachedDeviceKey.key as any, 'base64')
+      cachedDeviceKey.iv = Buffer.from(cachedDeviceKey.iv as any, 'base64')
+    }
+
+    console.warn(cachedDeviceKey)
+    const deviceKey: TapoDeviceKey = cachedDeviceKey
+      ?? (
+        ip
+          ? await loginDeviceByIp(email, password, ip)
+          : await loginDevice(email, password, device)
+      )
+
+
+    console.warn(deviceKey, cachedDeviceKey === deviceKey)
+    if (!cachedDeviceKey) {
+      await this.cache(cachingKey, {
+        ...deviceKey,
+        key: deviceKey.key.toString('base64'),
+        iv: deviceKey.iv.toString('base64')
+      })
+    }
 
     return deviceKey
   }
@@ -101,5 +121,8 @@ export class TapoApiService {
     return getDeviceInfo(deviceKey)
   }
 
+  private cache<T>(key: `${CachedObjectKey}:${string}`, data: T): Promise<void> {
+    return this.cachingService.setItem(key, data, this.cacheTimeout)
+  }
 
 }

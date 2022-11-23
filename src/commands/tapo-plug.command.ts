@@ -1,17 +1,8 @@
 import { Command, CommandRunner, Option } from 'nest-commander';
 import { cloudLogin, getDeviceInfo, listDevicesByType, loginDevice, loginDeviceByIp, TapoDevice, TapoDeviceKey, turnOff, turnOn } from 'tp-link-tapo-connect';
 import { TapoDeviceType } from '../models/tapo-device-type.enum';
+import { TapoPlugCommandOptions } from '../models/tapo-plug-command-options';
 import { TapoControlService } from '../services/tapo-control.service';
-
-interface TapoPlugCommandOptions {
-  email: string;
-  password: string;
-  aliases?: string[];
-  ips?: string[];
-  state?: boolean;
-  toggle?: boolean;
-  debug?: boolean;
-}
 
 @Command({
   name: 'tapo-plug',
@@ -27,46 +18,7 @@ export class TapoPlugCommand extends CommandRunner {
     passedParam: string[],
     options?: TapoPlugCommandOptions,
   ): Promise<void> {
-
-    const { email, password, aliases, ips, state, toggle, debug } = options
-    if (debug) console.warn(options)
-
-    let devicesListFiltered: TapoDevice[] = []
-
-    if (aliases?.length) {
-      const cloudToken = await cloudLogin(email, password);
-      const devicesList = await listDevicesByType(
-        cloudToken,
-        TapoDeviceType.SMART_PLUG
-      );
-
-      devicesListFiltered =
-        devicesList.filter(device => aliases.includes(device.alias))
-
-      if (debug) console.warn({ devicesList, devicesListFiltered })
-    }
-
-    const deviceTokens: TapoDeviceKey[] = await Promise.all([
-      ...devicesListFiltered?.map(device => loginDevice(email, password, device)),
-      ...[].concat(ips?.map(ip => loginDeviceByIp(email, password, ip)))
-    ])
-
-    if (!deviceTokens.length) return
-
-    await Promise.allSettled(deviceTokens.map(async (deviceToken, i) => {
-      if (state === true) return turnOn(deviceToken)
-      if (state === false) return turnOff(deviceToken)
-      if (toggle) {
-
-        const info = await getDeviceInfo(deviceToken)
-        if (debug) console.warn(info)
-
-        if (info.device_on) await turnOff(deviceToken)
-        else await turnOn(deviceToken)
-      }
-    }))
-
-
+    return this.service.controlPlug(options)
   }
 
   @Option({
