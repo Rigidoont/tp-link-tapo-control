@@ -3433,10 +3433,10 @@ loader-runner@^4.2.0:
   resolved "https://registry.yarnpkg.com/loader-runner/-/loader-runner-4.3.0.tgz#c1b4a163b99f614830353b16755e7149ac2314e1"
   integrity sha512-3R/1M+yS3j5ou80Me59j7F9IMs4PXs3VqRrm0TU3AbKPxlmpoY1TNscJV/oGJXo8qCatFGTfDbY6W6ipGOYXfg==
 
-local-devices@^3.2.0:
-  version "3.2.0"
-  resolved "https://registry.yarnpkg.com/local-devices/-/local-devices-3.2.0.tgz#02cbcaa06cb6a66d751b39979ba2190b62d8f163"
-  integrity sha512-JkWPXdFbu0l4nPXtINrcz8fkLA0WLMopmsHLvYsOMLnFx1SUM5cTVlLz6ZXcYMZHzWXoy0pOreKKLzsWBq5muQ==
+local-devices@^4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/local-devices/-/local-devices-4.0.0.tgz#a7ce01fb5455d4fb649484ccc68ce3a587ca685f"
+  integrity sha512-65EPltZW7bPRTmIiL9yuQcu0Om6dYl4dzRgiIYxl/cUO62FBW09ZpIVtpffXU8vryfGXEXxt68oWK/Kru12FEA==
   dependencies:
     get-ip-range "^2.1.0"
     ip "^1.1.5"
@@ -4571,13 +4571,13 @@ toidentifier@1.0.1:
   resolved "https://registry.yarnpkg.com/toidentifier/-/toidentifier-1.0.1.tgz#3be34321a88a820ed1bd80dfaa33e479fbb8dd35"
   integrity sha512-o5sSPKEkg/DIQNmH43V0/uerLrpzVedkUh8tGNvaeXpfpuwjKenlSox/2O/BTlZUtEe+JG7s5YhEz608PlAHRA==
 
-tp-link-tapo-connect@^1.0.8:
-  version "1.0.8"
-  resolved "https://registry.yarnpkg.com/tp-link-tapo-connect/-/tp-link-tapo-connect-1.0.8.tgz#233eaf3fa1a500b1cf013569c5c0c20884ccf221"
-  integrity sha512-HxyaO+DFmGlfuzBXlAz8wPjjvSe9hPheghigu6oAsUqAKnpNMfMxErUBuGS8+WoiQO0Zf2mdaMl3Xkp9hND4zA==
+tp-link-tapo-connect@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/tp-link-tapo-connect/-/tp-link-tapo-connect-2.0.0.tgz#73427b25af3a847eebb4c4b0c8a8f4489f49c1f8"
+  integrity sha512-k3hRv1dEacXRG3we1VB1/xFS9IMOQZwj/Nf724LwoE7ice4JKwtrYkYN1qH5SX+eunJky71XJTyQ0O/LKBQ7aQ==
   dependencies:
     axios "^0.21.4"
-    local-devices "^3.2.0"
+    local-devices "^4.0.0"
     uuid "^8.3.2"
 
 tr46@~0.0.3:

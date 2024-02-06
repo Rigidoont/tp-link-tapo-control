@@ -1,6 +1,4 @@
 import { Command, CommandRunner, Option } from 'nest-commander';
-import { cloudLogin, getDeviceInfo, listDevicesByType, loginDevice, loginDeviceByIp, TapoDevice, TapoDeviceKey, turnOff, turnOn } from 'tp-link-tapo-connect';
-import { TapoDeviceType } from '../models/tapo-device-type.enum';
 import { TapoPlugCommandOptions } from '../models/tapo-plug-command-options';
 import { TapoControlService } from '../services/tapo-control.service';
 

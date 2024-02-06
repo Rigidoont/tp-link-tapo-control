@@ -16,10 +16,16 @@ export class TapoCachingService {
     })
   }
 
+  async onModuleDestroy() {
+    await this.cleanup()
+  }
+
   async getItem<T>(key: string): Promise<T | undefined> {
-    // await this.store.autoloadPromise
     const item = await this.store
-      .findAsync<CachedObject<T>>({ name: key })
+      .findAsync<CachedObject<T>>({
+        name: key,
+        expiresAt: { $gt: new Date().getTime() },
+      })
       .limit(1)
       .sort({ createdAt: -1 })
       .execAsync()
@@ -27,15 +33,13 @@ export class TapoCachingService {
   }
 
   async setItem<T>(key: string, data: T, ttl: number): Promise<void> {
-    // await this.store.autoloadPromise
     const item = new CachedObject(key, data, ttl)
-    const s = await this.store.updateAsync({ name: key }, item, { upsert: true })
-    console.warn(s)
-
-    return
+    await this.store.updateAsync({ name: key }, item, { upsert: true })
   }
 
+  // TODO use and test
   async cleanup(): Promise<void> {
+    console.warn('cleanup')
     await this.store.removeAsync(
       { expiresAt: { $lwe: new Date().getTime() } },
       { multi: true }

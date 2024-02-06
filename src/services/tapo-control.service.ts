@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { cloudLogin, getDeviceInfo, listDevicesByType, loginDevice, loginDeviceByIp, TapoDevice, TapoDeviceKey, turnOff, turnOn } from 'tp-link-tapo-connect';
+import { TapoDevice } from 'tp-link-tapo-connect';
 import { TapoCredentials } from '../models/tapo-credentials';
 import { TapoDeviceType } from '../models/tapo-device-type.enum';
 import { TapoPlugCommandOptions } from '../models/tapo-plug-command-options';
@@ -21,7 +21,7 @@ export class TapoControlService {
     let devicesListFiltered: TapoDevice[] = []
 
     if (aliases?.length) {
-      const devicesList = await this.apiService.getDevicesByType(
+      const devicesList = await this.apiService.getDevices(
         credentials,
         TapoDeviceType.SMART_PLUG
       );
@@ -32,24 +32,23 @@ export class TapoControlService {
       if (debug) console.warn({ devicesList, devicesListFiltered })
     }
 
-    const deviceKeys: TapoDeviceKey[] = await Promise.all([
+    const devices = await Promise.all([
       ...(devicesListFiltered ?? []),
       ...(ips ?? [])
-     ].map(item => this.apiService.getDeviceKey(credentials, item))
+     ].map(item => this.apiService.loginDevice(credentials, item))
     )
 
-    if (!deviceKeys.length) return
+    if (!devices.length) return
 
-    await Promise.allSettled(deviceKeys.map(async (deviceKey, i) => {
-      if (state === true) return turnOn(deviceKey)
-      if (state === false) return turnOff(deviceKey)
+    await Promise.allSettled(devices.map(async (device, i) => {
+      if (state === true) return device.turnOn()
+      if (state === false) return device.turnOff()
       if (toggle) {
-
-        const info = await this.apiService.getDeviceInfo(deviceKey)
+        const info = await device.getDeviceInfo()
         if (debug) console.warn(info)
 
-        if (info.device_on) await turnOff(deviceKey)
-        else await turnOn(deviceKey)
+        if (info.device_on) await device.turnOff()
+        else await device.turnOn()
       }
     }))
   }
